@@ -48,7 +48,9 @@ const NAV_CONFIG = [
 {
     section: 'SYSTÈME',
     items: [
-      { path: '/admin',   label: 'Administration',     icon: SettingsIcon, permission: 'manageUsers'  },
+      { path: '/admin',    label: 'Administration',     icon: SettingsIcon, permission: 'manageUsers'  },
+      { path: '/settings', label: 'Parametres',         icon: CogIcon },
+      { path: '/help',     label: 'Aide',               icon: HelpIcon },
     ],
   },
   
@@ -248,6 +250,12 @@ function CalendarIcon({ size = 16 }) {
 }
 function SettingsIcon({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth={1.6}><circle cx="12" cy="12" r="3" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" /></svg>;
+}
+function CogIcon({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth={1.6}><path d="M10.4 2h3.2l.6 2.2a8.1 8.1 0 012 .8l2-1.1 2.3 2.3-1.1 2a8.1 8.1 0 01.8 2L22 10.4v3.2l-2.2.6a8.1 8.1 0 01-.8 2l1.1 2-2.3 2.3-2-1.1a8.1 8.1 0 01-2 .8L13.6 22h-3.2l-.6-2.2a8.1 8.1 0 01-2-.8l-2 1.1-2.3-2.3 1.1-2a8.1 8.1 0 01-.8-2L2 13.6v-3.2l2.2-.6a8.1 8.1 0 01.8-2l-1.1-2 2.3-2.3 2 1.1a8.1 8.1 0 012-.8L10.4 2z" /><circle cx="12" cy="12" r="3.2" /></svg>;
+}
+function HelpIcon({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth={1.6}><circle cx="12" cy="12" r="9" /><path d="M9.1 9a3 3 0 115.2 2.1c-.8.8-1.8 1.4-1.8 2.9" /><circle cx="12" cy="17" r="0.8" fill="currentColor" stroke="none" /></svg>;
 }
 function LogoutIcon({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth={1.6}><path d="M16 17l5-5-5-5M21 12H9" /><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /></svg>;

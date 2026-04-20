@@ -34,25 +34,18 @@ import StatistiquesPage from './pages/statistiques/StatistiquesPage';
 import StatsPage from './pages/stats/StatsPage';
 import AdminPage from './pages/admin/AdminPage';
 import AdminCustomFieldsPage from './pages/admin/AdminCustomFieldsPage';
+import SettingsPage from './pages/settings/SettingsPage';
+import HelpPage from './pages/help/HelpPage';
 
-import { AppLayout } from './components/layout/Sidebar';
 import AccessDenied, { RequirePermission } from './components/auth/AccessDenied';
 import useAuthStore from './hooks/useAuth';
 import './styles/globals.css';
 
-
-// ─────────────────────────────────────────
-// Route protégée : authentification
-// ─────────────────────────────────────────
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuthStore();
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
-
-// ─────────────────────────────────────────
-// Route protégée : permission spécifique
-// ─────────────────────────────────────────
 function PermRoute({ permission, message, children }) {
   return (
     <ProtectedRoute>
@@ -63,36 +56,6 @@ function PermRoute({ permission, message, children }) {
   );
 }
 
-
-// ─────────────────────────────────────────
-// Page "à venir"
-// ─────────────────────────────────────────
-function ComingSoon({ title }) {
-  return (
-    <AppLayout title={title}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 360 }}>
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: 52, marginBottom: 16 }}>🚧</div>
-          <div style={{
-            fontSize: 17,
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            marginBottom: 8,
-            fontFamily: 'var(--font-display)'
-          }}>
-            {title}
-          </div>
-          <div style={{ fontSize: 13 }}>Module en cours de développement</div>
-        </div>
-      </div>
-    </AppLayout>
-  );
-}
-
-
-// ─────────────────────────────────────────
-// APP
-// ─────────────────────────────────────────
 function App() {
   const { initAuth } = useAuthStore();
 
@@ -116,19 +79,15 @@ function App() {
       />
 
       <Routes>
-
-        {/* ───────── Auth publique ───────── */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* ───────── Dashboard ───────── */}
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <DashboardPage />
           </ProtectedRoute>
         } />
 
-        {/* ───────── Patients ───────── */}
         <Route path="/patients" element={
           <PermRoute permission="readPatient">
             <PatientsPage />
@@ -153,7 +112,6 @@ function App() {
           </PermRoute>
         } />
 
-        {/* ───────── Diagnostics ───────── */}
         <Route path="/diagnostics" element={
           <PermRoute permission="readDiagnostic">
             <DiagnosticsPage />
@@ -172,7 +130,6 @@ function App() {
           </PermRoute>
         } />
 
-        {/* ───────── Traitements ───────── */}
         <Route path="/traitements" element={
           <PermRoute permission="readTreatment">
             <TraitementsPage />
@@ -191,7 +148,6 @@ function App() {
           </PermRoute>
         } />
 
-        {/* ───────── Suivi ───────── */}
         <Route path="/suivi" element={
           <PermRoute permission="readTreatment">
             <SuiviPage />
@@ -216,28 +172,24 @@ function App() {
           </PermRoute>
         } />
 
-        {/* ───────── Statistiques ───────── */}
         <Route path="/stats" element={
           <PermRoute permission="viewStatistics">
             <StatsPage />
           </PermRoute>
         } />
 
-        {/* ───────── Statistiques (legacy) ───────── */}
         <Route path="/statistiques" element={
           <PermRoute permission="viewStatistics">
             <StatistiquesPage />
           </PermRoute>
         } />
 
-        {/* ───────── Carte SIG ───────── */}
         <Route path="/carte" element={
           <PermRoute permission="viewMap">
             <CartographiePage />
           </PermRoute>
         } />
 
-        {/* ───────── RCP ───────── */}
         <Route path="/rcp" element={
           <PermRoute permission="viewRcp">
             <RCPPage />
@@ -262,30 +214,38 @@ function App() {
           </PermRoute>
         } />
 
-        {/* ───────── Administration ───────── */}
         <Route path="/admin" element={
           <PermRoute permission="manageUsers">
             <AdminPage />
           </PermRoute>
         } />
+
         <Route path="/admin/champs-personnalises" element={
           <PermRoute permission="manageUsers">
             <AdminCustomFieldsPage />
           </PermRoute>
         } />
 
-        {/* ───────── Accès refusé ───────── */}
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/help" element={
+          <ProtectedRoute>
+            <HelpPage />
+          </ProtectedRoute>
+        } />
+
         <Route path="/acces-refuse" element={
           <ProtectedRoute>
             <AccessDenied />
           </ProtectedRoute>
         } />
-       
 
-        {/* ───────── Redirects ───────── */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
-
       </Routes>
     </BrowserRouter>
   );
