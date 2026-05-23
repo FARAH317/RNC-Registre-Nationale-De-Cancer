@@ -198,6 +198,7 @@ _CORS_DEFAULTS = ','.join([
     'https://devona-copasetic-chieko.ngrok-free.dev',
     'https://registredecancer.vercel.app',
     'https://registrecancer.vercel.app',
+    'https://cancerregister.vercel.app',
 ])
 
 CORS_ALLOWED_ORIGINS = config(
