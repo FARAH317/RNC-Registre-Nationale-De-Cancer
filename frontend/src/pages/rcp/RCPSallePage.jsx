@@ -65,7 +65,6 @@ export default function RCPSallePage() {
   const [showChatPanel, setShowChatPanel]         = useState(null);
   const [showDossierDetail, setShowDossierDetail] = useState(null);
   const [showVoteModal, setShowVoteModal]         = useState(null);
-  const [showAIAssist, setShowAIAssist]           = useState(null);
   const [showAjouterMedecinModal, setShowAjouterMedecinModal] = useState(false);
   const [showCRModal, setShowCRModal]             = useState(false);
   const [showUploadModal, setShowUploadModal]     = useState(null); // dossierId
@@ -376,7 +375,7 @@ export default function RCPSallePage() {
                     onAddDecision={() => setShowDecisionModal(d.id)}
                     onOpenChat={() => setShowChatPanel(d)}
                     onVote={() => setShowVoteModal(d.id)}
-                    onAIAssist={() => setShowAIAssist(d)}
+                    
                     onMarkRealise={marquerDecisionRealisee}
                     onUploadFichier={() => setShowUploadModal(d.id)}
                   />
@@ -508,16 +507,13 @@ export default function RCPSallePage() {
         <ChatPanel reunionId={id} dossier={showChatPanel} onClose={() => setShowChatPanel(null)} />
       )}
 
-      {/* ── PANEL: IA ── */}
-      {showAIAssist && (
-        <AIAssistPanel dossier={showAIAssist} onClose={() => setShowAIAssist(null)} />
-      )}
+      
     </AppLayout>
   );
 }
 
 // ─── DossierCard ──────────────────────────────────────────────────────────────
-function DossierCard({ d, index, votes, isExpanded, onToggleExpand, onAddDecision, onOpenChat, onVote, onAIAssist, onMarkRealise, onUploadFichier }) {
+function DossierCard({ d, index, votes, isExpanded, onToggleExpand, onAddDecision, onOpenChat, onVote, onMarkRealise, onUploadFichier }) {
   const voteCount = Object.values(votes).reduce((a, b) => a + b, 0);
   return (
     <div style={{ background:'var(--bg-card)', border:'1px solid var(--border-light)', borderRadius:'var(--radius-md)', overflow:'hidden', animation:`fadeUp 0.3s ease ${index*0.05}s both` }}>
@@ -540,7 +536,7 @@ function DossierCard({ d, index, votes, isExpanded, onToggleExpand, onAddDecisio
         <div style={{ display:'flex', gap:6, flexShrink:0, flexWrap:'wrap' }}>
           <SmallBtn label={`Voter${voteCount > 0 ? ` (${voteCount})` : ''}`} color="#d97706" onClick={onVote} />
           <SmallBtn label="Chat" color="#2563eb" onClick={onOpenChat} />
-          <SmallBtn label="IA" color="#7c3aed" onClick={onAIAssist} />
+          
           <SmallBtn label="Fichier" color="#0891b2" onClick={onUploadFichier} />
           <SmallBtn label="+ Decision" color="#16a34a" onClick={onAddDecision} />
           <button onClick={onToggleExpand}
@@ -1025,131 +1021,7 @@ function ChatPanel({ reunionId, dossier, onClose }) {
   );
 }
 
-// ─── AIAssistPanel ────────────────────────────────────────────────────────────
-function AIAssistPanel({ dossier, onClose }) {
-  const [messages, setMessages] = useState([
-    { role:'assistant', content:`Bonjour. Je suis votre assistant oncologique.\n\nJe vais vous aider a analyser le dossier de ${dossier.patient_nom} (${dossier.patient_numero}).\n\nPosez vos questions sur les protocoles, les guidelines ESMO/NCCN/INCa, les interactions medicamenteuses ou demandez un resume de la situation clinique.` }
-  ]);
-  const [input, setInput]     = useState('');
-  const [loading, setLoading] = useState(false);
-  const endRef = useRef(null);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages]);
-
-  const SYSTEM_PROMPT = `Tu es un assistant medical expert en oncologie, integre dans un systeme RCP hospitalier algerien (Registre National du Cancer).
-Tu aides les medecins a analyser des dossiers oncologiques, consulter les guidelines (NCCN, ESMO, INCa), preparer les decisions therapeutiques.
-
-Dossier en discussion :
-- Patient : ${dossier.patient_nom} (${dossier.patient_numero})
-- Type de presentation : ${dossier.type_label || dossier.type_presentation || 'Non specifie'}
-- Statut : ${dossier.statut_label || dossier.statut || 'Non specifie'}
-- Question posee a la RCP : ${dossier.question_posee || 'Non precisee'}
-
-Reponds en francais, de facon structuree et professionnelle. Cite les guidelines pertinentes. Rappelle que les decisions finales appartiennent aux medecins.`;
-
-  const sendMessage = async () => {
-    const txt = input.trim();
-    if (!txt || loading) return;
-    const userMsg = { role:'user', content:txt };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    setInput('');
-    setLoading(true);
-    try {
-      // Appelle le backend (clé Groq sécurisée côté serveur)
-      const token = localStorage.getItem('access_token');
-      if (!token) throw new Error("Non authentifié — veuillez vous reconnecter.");
-
-      const res = await fetch(`${(import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/api\/v1$/, '')}/api/v1/voice/extract/`, {
-        method:'POST',
-        headers: {
-          'Content-Type':'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          transcript: [
-            'Tu es un assistant oncologique dans le cadre d\'une RCP. Réponds en français.',
-            'Objectif: aider à formuler une analyse/proposition de décisions, pas à remplacer le médecin.',
-            `Contexte patient: ${dossier.patient_nom} (${dossier.patient_numero})`,
-            `Type: ${dossier.type_label || dossier.type_presentation || ''}`,
-            `Question RCP: ${dossier.question_posee || ''}`,
-            '',
-            'Question:',
-            txt,
-          ].join('\\n'),
-          form_type: 'patient',
-        }),
-      });
-      const data = await res.json();
-      // Endpoint voix retourne { fields: {...}, transcript: '...' }
-      const reply = data?.fields?.notes || data?.error || 'Aucune reponse.';
-      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-    } catch {
-      setMessages(prev => [...prev, { role:'assistant', content:'Erreur de connexion. Veuillez reessayer.' }]);
-    } finally { setLoading(false); }
-  };
-
-  const handleKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
-
-  const QUICK = [
-    'Quelles sont les guidelines ESMO pour ce type de cancer ?',
-    'Quels protocoles de chimiotherapie sont recommandes ?',
-    'Y a-t-il des essais cliniques pertinents ?',
-    'Quels examens complementaires sont indiques ?',
-    'Resume les options therapeutiques disponibles',
-  ];
-
-  return (
-    <SidePanel onClose={onClose} title={`Assistant IA — ${dossier.patient_nom}`} subtitle="Aide a la decision oncologique" color="#7c3aed">
-      <div style={{ padding:'8px 14px', borderBottom:'1px solid var(--border)', background:'rgba(124,58,237,0.03)' }}>
-        <div style={{ fontSize:10, color:'#7c3aed', fontWeight:700, marginBottom:6, textTransform:'uppercase', letterSpacing:0.5 }}>Questions rapides</div>
-        <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
-          {QUICK.map(q => (
-            <button key={q} onClick={() => setInput(q)} style={{ padding:'3px 9px', background:'rgba(124,58,237,0.08)', border:'1px solid rgba(124,58,237,0.18)', borderRadius:12, color:'#7c3aed', fontSize:10, cursor:'pointer', lineHeight:1.4 }}>
-              {q}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ flex:1, overflowY:'auto', padding:'14px', display:'flex', flexDirection:'column', gap:12 }}>
-        {messages.map((msg, i) => (
-          <div key={i} style={{ display:'flex', flexDirection:'column', gap:4, alignItems:msg.role==='user'?'flex-end':'flex-start' }}>
-            <div style={{ fontSize:10, color:'var(--text-muted)', padding:'0 4px' }}>
-              {msg.role === 'user' ? 'Vous' : 'Assistant IA'}
-            </div>
-            <div style={{ maxWidth:'90%', padding:'11px 14px', background:msg.role==='user'?'rgba(37,99,235,0.08)':'rgba(124,58,237,0.06)', border:`1px solid ${msg.role==='user'?'rgba(37,99,235,0.18)':'rgba(124,58,237,0.15)'}`, borderRadius:msg.role==='user'?'14px 14px 0 14px':'14px 14px 14px 0', fontSize:12.5, color:'var(--text-secondary)', lineHeight:1.75, whiteSpace:'pre-wrap' }}>
-              {msg.content}
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div style={{ display:'flex', alignItems:'center', gap:8, color:'var(--text-muted)', fontSize:12 }}>
-            <div style={{ display:'flex', gap:4 }}>
-              {[0,1,2].map(i => <div key={i} style={{ width:7, height:7, borderRadius:'50%', background:'#7c3aed', animation:'pulse-glow 1.2s ease-in-out infinite', animationDelay:`${i*0.2}s`, opacity:0.6 }} />)}
-            </div>
-            Analyse en cours...
-          </div>
-        )}
-        <div ref={endRef} />
-      </div>
-
-      <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', display:'flex', gap:8 }}>
-        <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKey} rows={2}
-          placeholder="Posez votre question medicale... (Entree pour envoyer)"
-          disabled={loading}
-          style={{ flex:1, padding:'9px 12px', background:'var(--bg-elevated)', border:'1px solid var(--border)', borderRadius:8, color:'var(--text-primary)', fontSize:12.5, outline:'none', resize:'none', fontFamily:'var(--font-body)', lineHeight:1.5, opacity:loading?0.6:1 }} />
-        <button onClick={sendMessage} disabled={loading}
-          style={{ padding:'9px 16px', background:'linear-gradient(135deg,#7c3aed,#6d28d9)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:loading?'not-allowed':'pointer', alignSelf:'flex-end', fontWeight:700, opacity:loading?0.7:1 }}>
-          Envoyer
-        </button>
-      </div>
-      <div style={{ padding:'6px 14px', background:'rgba(124,58,237,0.02)', borderTop:'1px solid var(--border)' }}>
-        <p style={{ fontSize:9.5, color:'var(--text-muted)', margin:0, lineHeight:1.5 }}>L'assistant IA est un outil d'aide a la decision uniquement. Les decisions therapeutiques relevent de la responsabilite des medecins.</p>
-      </div>
-    </SidePanel>
-  );
-}
 
 // ─── CompteRenduModal ─────────────────────────────────────────────────────────
 function CompteRenduModal({ data, onClose, onPrint, reload }) {
