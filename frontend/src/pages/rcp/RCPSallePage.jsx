@@ -1056,24 +1056,33 @@ Reponds en francais, de facon structuree et professionnelle. Cite les guidelines
     setInput('');
     setLoading(true);
     try {
-      const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-      if (!apiKey) throw new Error("VITE_GROQ_API_KEY manquant");
+      // Appelle le backend (clé Groq sécurisée côté serveur)
+      const token = localStorage.getItem('access_token');
+      if (!token) throw new Error("Non authentifié — veuillez vous reconnecter.");
 
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const res = await fetch(`${(import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/api\/v1$/, '')}/api/v1/voice/extract/`, {
         method:'POST',
         headers: {
           'Content-Type':'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          model:'llama3-70b-8192',
-          temperature:0.4,
-          max_tokens:1000,
-          messages:newMessages.map(m => ({ role:m.role, content:m.content })),
+          transcript: [
+            'Tu es un assistant oncologique dans le cadre d\'une RCP. Réponds en français.',
+            'Objectif: aider à formuler une analyse/proposition de décisions, pas à remplacer le médecin.',
+            `Contexte patient: ${dossier.patient_nom} (${dossier.patient_numero})`,
+            `Type: ${dossier.type_label || dossier.type_presentation || ''}`,
+            `Question RCP: ${dossier.question_posee || ''}`,
+            '',
+            'Question:',
+            txt,
+          ].join('\\n'),
+          form_type: 'patient',
         }),
       });
       const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content || 'Aucune réponse.';
+      // Endpoint voix retourne { fields: {...}, transcript: '...' }
+      const reply = data?.fields?.notes || data?.error || 'Aucune reponse.';
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch {
       setMessages(prev => [...prev, { role:'assistant', content:'Erreur de connexion. Veuillez reessayer.' }]);

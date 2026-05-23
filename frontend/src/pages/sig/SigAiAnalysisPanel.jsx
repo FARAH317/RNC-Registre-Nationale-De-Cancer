@@ -1,4 +1,4 @@
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 import 'leaflet/dist/leaflet.css';
 import {
   Brain,

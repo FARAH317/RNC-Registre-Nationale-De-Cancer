@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import useAuthStore from '../../hooks/useAuth';
 import usePermissions from '../../hooks/usePermissions';
 import usePreferences from '../../hooks/usePreferences';
+import NotificationBell from './NotificationBell';
 
 const SIDEBAR_WIDTH = 260;
 const MOBILE_BREAKPOINT = 1100;
@@ -249,6 +250,9 @@ export function AppLayout({ children, title }) {
               <h1 style={{ ...pageTitleStyle, color: dark ? '#f8fafc' : '#0f172a' }}>{title}</h1>
               <div style={{ fontSize: 11, color: dark ? '#94a3b8' : '#64748b', marginTop: 2 }}>{t.subtitle}</div>
             </div>
+          </div>
+          <div style={{ marginLeft: 'auto' }}>
+            <NotificationBell />
           </div>
         </div>
         <div className="app-shell__content" style={{ padding: isMobile ? '18px 14px 24px' : '28px', flex: 1 }}>
