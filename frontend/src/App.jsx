@@ -34,10 +34,14 @@ import StatistiquesPage from './pages/statistiques/StatistiquesPage';
 import StatsPage from './pages/stats/StatsPage';
 import AdminPage from './pages/admin/AdminPage';
 import AdminCustomFieldsPage from './pages/admin/AdminCustomFieldsPage';
+import SettingsPage from './pages/settings/SettingsPage';
+import HelpCenterPage from './pages/help/HelpCenterPage';
+import DoctorSettingsPage from './pages/settings/DoctorSettingsPage';
 
 import { AppLayout } from './components/layout/Sidebar';
 import AccessDenied, { RequirePermission } from './components/auth/AccessDenied';
 import useAuthStore from './hooks/useAuth';
+import usePreferences from './hooks/usePreferences';
 import './styles/globals.css';
 
 
@@ -95,10 +99,12 @@ function ComingSoon({ title }) {
 // ─────────────────────────────────────────
 function App() {
   const { initAuth } = useAuthStore();
+  const { initPreferences } = usePreferences();
 
   useEffect(() => {
     initAuth();
-  }, [initAuth]);
+    initPreferences();
+  }, [initAuth, initPreferences]);
 
   return (
     <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
@@ -272,6 +278,21 @@ function App() {
           <PermRoute permission="manageUsers">
             <AdminCustomFieldsPage />
           </PermRoute>
+        } />
+        <Route path="/parametres" element={
+          <PermRoute permission="manageUsers">
+            <SettingsPage />
+          </PermRoute>
+        } />
+        <Route path="/aide" element={
+          <ProtectedRoute>
+            <HelpCenterPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/parametres-medecin" element={
+          <ProtectedRoute>
+            <DoctorSettingsPage />
+          </ProtectedRoute>
         } />
 
         {/* ───────── Accès refusé ───────── */}
