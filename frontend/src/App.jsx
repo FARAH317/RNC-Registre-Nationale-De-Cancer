@@ -243,29 +243,13 @@ function App() {
         } />
 
         {/* ───────── RCP ───────── */}
-        <Route path="/rcp" element={
-          <PermRoute permission="viewRcp">
-            <RCPPage />
-          </PermRoute>
-        } />
+        <Route path="/rcp" element={<RCPPage />} />
 
-        <Route path="/rcp/nouveau" element={
-          <PermRoute permission="viewRcp">
-            <NewRCPPage />
-          </PermRoute>
-        } />
+        <Route path="/rcp/nouveau" element={<NewRCPPage />} />
 
-        <Route path="/rcp/:id" element={
-          <PermRoute permission="viewRcp">
-            <RCPDetailPage />
-          </PermRoute>
-        } />
+        <Route path="/rcp/:id" element={<RCPDetailPage />} />
 
-        <Route path="/rcp/dossier/nouveau" element={
-          <PermRoute permission="viewRcp">
-            <NewDossierRCPPage />
-          </PermRoute>
-        } />
+        <Route path="/rcp/dossier/nouveau" element={<NewDossierRCPPage />} />
 
         {/* ───────── Administration ───────── */}
         <Route path="/admin" element={
