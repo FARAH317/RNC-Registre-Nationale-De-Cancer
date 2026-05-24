@@ -227,7 +227,7 @@ export default function RCPSallePage() {
   const sc = STATUT_CFG[data.statut] || { color:'#9ca3af', label:'-' };
   const totalDecisions = data.dossiers?.reduce((s, d) => s + (d.nb_decisions || 0), 0) || 0;
   const specialitesPresentes = [...new Set((data.presences || []).map(p => p.specialite))];
-  const quorumOk = specialitesPresentes.length >= 3;
+  const quorumOk = specialitesPresentes.length >= 1;
 
   return (
     <AppLayout title="Salle RCP">
@@ -395,8 +395,8 @@ export default function RCPSallePage() {
 
         {/* ── TAB: COMPTE RENDU ── */}
         {activeTab === 'cr' && (
-          <CompteRenduTab data={data} onPrint={handlePrintCR} reload={reload} />
-        )}
+  <CompteRenduTab data={data} onPrint={handlePrintCR} reload={reload} onBack={() => setTab('dossiers')} />
+)}
 
         {/* ── TAB: SUIVI ── */}
         {activeTab === 'suivi' && (
@@ -489,18 +489,18 @@ export default function RCPSallePage() {
       {showCRModal && (
         <Modal onClose={() => setShowCRModal(false)} maxWidth={700}>
           <ModalTitle>Compte Rendu RCP</ModalTitle>
-          <CompteRenduTab data={data} onPrint={handlePrintCR} reload={reload} />
+          <CompteRenduTab data={data} onPrint={handlePrintCR} reload={reload} onBack={() => setShowCRModal(false)} />
         </Modal>
       )}
 
       {/* ── MODAL: Upload fichier / DICOM ── */}
       {showUploadModal && (
-        <UploadFichierModal
-          dossierId={showUploadModal}
-          onClose={() => setShowUploadModal(null)}
-          onSuccess={() => { setShowUploadModal(null); reload(); toast.success('Fichier telecharge'); }}
-        />
-      )}
+  <UploadFichierModal
+    dossierId={showUploadModal}
+    onClose={() => setShowUploadModal(null)}
+    onSuccess={() => { setShowUploadModal(null); reload(); toast.success('Fichier telecharge'); }}
+  />
+)}
 
       {/* ── PANEL: Chat ── */}
       {showChatPanel && (
@@ -675,24 +675,24 @@ function PresencesTab({ data, onAjouter, quorumOk, specialitesPresentes }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
       {/* Quorum Banner */}
-      <div style={{ padding:'12px 18px', borderRadius:'var(--radius-md)', background:quorumOk?'rgba(22,163,74,0.06)':'rgba(220,38,38,0.06)', border:`1px solid ${quorumOk?'rgba(22,163,74,0.25)':'rgba(220,38,38,0.25)'}`, display:'flex', alignItems:'center', gap:12 }}>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:13, fontWeight:700, color:quorumOk?'#16a34a':'#dc2626', marginBottom:2 }}>
-            {quorumOk
-              ? `Quorum valide — ${specialitesPresentes.length} specialites presentes`
-              : `Quorum insuffisant — ${specialitesPresentes.length}/3 specialites requises`
-            }
-          </div>
-          <div style={{ fontSize:11, color:'var(--text-muted)' }}>
-            {quorumOk ? 'La reunion RCP peut se tenir conformement aux recommandations.' : 'La RCP necessite au minimum 3 specialites medicales differentes.'}
-          </div>
-        </div>
-        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-          {specialitesPresentes.map(s => (
-            <span key={s} style={{ padding:'2px 8px', borderRadius:12, fontSize:10, background:'rgba(37,99,235,0.08)', color:'#2563eb', border:'1px solid rgba(37,99,235,0.2)', fontWeight:600 }}>{s}</span>
-          ))}
-        </div>
+      {quorumOk && (
+  <div style={{ padding:'12px 18px', borderRadius:'var(--radius-md)', background:'rgba(22,163,74,0.06)', border:'1px solid rgba(22,163,74,0.25)', display:'flex', alignItems:'center', gap:12 }}>
+    <div style={{ flex:1 }}>
+      <div style={{ fontSize:13, fontWeight:700, color:'#16a34a', marginBottom:2 }}>
+        Quorum valide — {specialitesPresentes.length} specialites presentes
       </div>
+      <div style={{ fontSize:11, color:'var(--text-muted)' }}>
+        La reunion RCP peut se tenir conformement aux recommandations.
+      </div>
+    </div>
+    <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+      {specialitesPresentes.map(s => (
+        <span key={s} style={{ padding:'2px 8px', borderRadius:12, fontSize:10, background:'rgba(37,99,235,0.08)', color:'#2563eb', border:'1px solid rgba(37,99,235,0.2)', fontWeight:600 }}>{s}</span>
+      ))}
+    </div>
+  </div>
+)}
+
 
       {/* Table */}
       <div style={{ background:'var(--bg-card)', border:'1px solid var(--border-light)', borderRadius:'var(--radius-md)', overflow:'hidden' }}>
@@ -751,7 +751,7 @@ function PresencesTab({ data, onAjouter, quorumOk, specialitesPresentes }) {
 }
 
 // ─── CompteRenduTab ────────────────────────────────────────────────────────────
-function CompteRenduTab({ data, onPrint, reload }) {
+function CompteRenduTab({ data, onPrint, reload, onBack }) {
   const [editing, setEditing] = useState(false);
   const [crText, setCrText] = useState(data.compte_rendu || '');
   const [saving, setSaving] = useState(false);
@@ -829,11 +829,19 @@ Fait le ${new Date().toLocaleDateString('fr-DZ')}`);
           )}
         </div>
       </div>
-      <div style={{ display:'flex', justifyContent:'flex-end' }}>
-        <button onClick={onPrint} style={{ padding:'10px 20px', background:'var(--bg-elevated)', border:'1px solid var(--border)', borderRadius:8, color:'var(--text-secondary)', fontSize:12, cursor:'pointer', fontWeight:600 }}>
-          Imprimer / Exporter PDF
-        </button>
-      </div>
+      <div style={{ display:'flex', justifyContent:'space-between' }}>
+  {onBack && (
+    <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 16px', background:'var(--bg-elevated)', border:'1px solid var(--border)', borderRadius:8, color:'var(--text-secondary)', fontSize:12, cursor:'pointer', fontWeight:600 }}>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
+      Retour
+    </button>
+  )}
+  <button onClick={onPrint} style={{ padding:'10px 20px', background:'var(--bg-elevated)', border:'1px solid var(--border)', borderRadius:8, color:'var(--text-secondary)', fontSize:12, cursor:'pointer', fontWeight:600 }}>
+    Imprimer / Exporter PDF
+  </button>
+</div>
     </div>
   );
 }
@@ -1189,6 +1197,59 @@ function UploadIcon() {
       <line x1="12" y1="12" x2="12" y2="21" />
       <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
     </svg>
+  );
+}
+function UploadFichierModal({ dossierId, onClose, onSuccess }) {
+  const [file, setFile]         = useState(null);
+  const [type, setType]         = useState('autre');
+  const [description, setDesc]  = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async () => {
+    if (!file) { toast.error('Selectionnez un fichier'); return; }
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('fichier', file);
+    formData.append('type_fichier', type);
+    formData.append('description', description);
+    try {
+      await rcpService.dossiers.uploadFichier(dossierId, formData);
+      onSuccess();
+    } catch { toast.error('Erreur upload'); }
+    finally { setUploading(false); }
+  };
+
+  return (
+    <Modal onClose={onClose} maxWidth={480}>
+      <ModalTitle>Ajouter un fichier / image</ModalTitle>
+      <div style={{ display:'grid', gap:12, marginBottom:20 }}>
+        <div>
+          <Label>Type de document</Label>
+          <select value={type} onChange={e => setType(e.target.value)} style={modalSelSt}>
+            {FICHIER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <Label>Fichier *</Label>
+          <input type="file" onChange={e => setFile(e.target.files[0])}
+            style={{ width:'100%', padding:'8px', background:'var(--bg-elevated)', border:'1px solid var(--border-light)', borderRadius:'var(--radius-md)', color:'var(--text-primary)', fontSize:13, cursor:'pointer', boxSizing:'border-box' }} />
+          {file && <div style={{ fontSize:11, color:'var(--text-muted)', marginTop:4 }}>{file.name} — {(file.size/1024).toFixed(0)} Ko</div>}
+        </div>
+        <div>
+          <Label>Description (optionnelle)</Label>
+          <input value={description} onChange={e => setDesc(e.target.value)}
+            placeholder="Ex: Scanner thoracique du 12/05/2026..."
+            style={modalInputSt} />
+        </div>
+      </div>
+      <div style={{ display:'flex', gap:10 }}>
+        <button onClick={onClose} style={{ flex:'0 0 100px', padding:'10px', background:'var(--bg-elevated)', border:'1px solid var(--border)', borderRadius:8, color:'var(--text-secondary)', fontSize:13, cursor:'pointer' }}>Annuler</button>
+        <button onClick={handleUpload} disabled={uploading || !file}
+          style={{ flex:1, padding:'10px', background:'linear-gradient(135deg,#0891b2,#0e7490)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:uploading||!file?'not-allowed':'pointer', opacity:uploading||!file?0.7:1 }}>
+          {uploading ? 'Envoi...' : 'Telecharger le fichier'}
+        </button>
+      </div>
+    </Modal>
   );
 }
 
